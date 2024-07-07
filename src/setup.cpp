@@ -4,7 +4,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
-#include "blinky_concurrency.hpp"
+#include "servo_concurrency.hpp"
 #include <caisselabs/stm32/stm32l432.hpp>
 
 #include <groov/config.hpp>

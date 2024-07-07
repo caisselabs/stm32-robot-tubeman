@@ -13,7 +13,7 @@
 #include "interrupt.hpp"  // for setup_interrupts
 
 // a concurrency policy is needed by the async library
-#include "blinky_concurrency.hpp"
+#include "servo_concurrency.hpp"
 
 #include "fixed_priority_scheduler.hpp"
 #include "timer_scheduler.hpp"
