@@ -9,8 +9,9 @@
 #pragma once
 
 #include <async/concepts.hpp>
+#include <async/connect.hpp>
 #include <async/env.hpp>
-#include <async/tags.hpp>
+#include <async/completion_tags.hpp>
 #include <async/schedulers/task.hpp>
 #include <async/stop_token.hpp>
 #include <async/type_traits.hpp>
@@ -36,8 +37,6 @@ private:
   static inline constinit task_t* interrupt_task = nullptr;
 
 public:
-  // constexpr static auto create_task = async::create_task<task_t>;
-
   static inline auto set_task(task_t &t) -> bool {
     return conc::call_in_critical_section<mutex>([&]() -> bool {
       auto const now_pending = not std::exchange(t.pending, true);
@@ -75,6 +74,12 @@ struct op_state final : async::task_base {
         }
     }
 
+    constexpr auto start() & -> void {
+        if (not check_stopped()) {
+	  interrupt_task_manager<InterruptTag>::set_task(*this);
+        }
+    }
+
     [[no_unique_address]] Rcvr rcvr;
 
   private:
@@ -88,51 +93,33 @@ struct op_state final : async::task_base {
         return false;
     }
 
-    template <stdx::same_as_unqualified<op_state> O>
-    friend constexpr auto tag_invoke(start_t, O &&o) -> void {
-        if (not std::forward<O>(o).check_stopped()) {
-	  interrupt_task_manager<InterruptTag>::set_task(o);
-        }
-    }
 };
 } // namespace interrupt_mgr
 
 template <typename InterruptTag>
 class interrupt_scheduler {
-    class env {
-        [[nodiscard]] friend constexpr auto
-        tag_invoke(get_completion_scheduler_t<set_value_t>, env) noexcept
-            -> interrupt_scheduler {
-            return {};
-        }
-    };
-
     struct sender {
         using is_sender = void;
 
-      private:
-        template <stdx::same_as_unqualified<sender> S, receiver_from<sender> R>
-        [[nodiscard]] friend constexpr auto tag_invoke(connect_t, S &&, R &&r) {
+        [[nodiscard]] constexpr auto query(get_env_t) const noexcept {
+  	    return prop{get_completion_scheduler_t<set_value_t>{}, interrupt_scheduler{}};
+        }
+
+        template <receiver R>
+        [[nodiscard]] constexpr auto connect(R &&r) const {
             return interrupt_mgr::op_state<InterruptTag, std::remove_cvref_t<R>>{
                 std::forward<R>(r)};
         }
 
-        [[nodiscard]] friend constexpr auto tag_invoke(get_env_t,
-                                                       sender) noexcept -> env {
-            return {};
-        }
-
         template <typename Env>
-        [[nodiscard]] friend constexpr auto
-        tag_invoke(get_completion_signatures_t, sender, Env const &) noexcept
+        [[nodiscard]] constexpr auto get_completion_signatures(Env const &) noexcept
             -> completion_signatures<set_value_t(), set_stopped_t()> {
             return {};
         }
 
         template <typename Env>
             requires unstoppable_token<stop_token_of_t<Env>>
-        [[nodiscard]] friend constexpr auto
-        tag_invoke(get_completion_signatures_t, sender, Env const &) noexcept
+        [[nodiscard]] constexpr auto get_completion_signatures(Env const &) noexcept
             -> completion_signatures<set_value_t()> {
             return {};
         }

@@ -16,11 +16,12 @@ project(
 include(cmake/get_cpm.cmake)
 cpmaddpackage("gh:intel/cicd-repo-infrastructure#dev")
 
-add_versioned_package("gh:intel/cpp-std-extensions#a51e2bf")
-add_versioned_package("gh:intel/cpp-baremetal-concurrency#030f9f3")
-add_versioned_package("gh:intel/cpp-baremetal-senders-and-receivers#768da1c")
-add_versioned_package("gh:intel/generic-register-operation-optimizer#835b88c")
+add_versioned_package("gh:intel/cpp-std-extensions#646bdbe")
+add_versioned_package("gh:intel/cpp-baremetal-concurrency#fef18ca")
+add_versioned_package("gh:intel/cpp-baremetal-senders-and-receivers#524be66")
+add_versioned_package("gh:intel/generic-register-operation-optimizer#bc3d92a")
 add_versioned_package("gh:caisselabs/stm32-groov#f1f39f7")
+add_versioned_package("gh:intel/compile-time-init-build#5b8cb6e")
 
 
 add_executable(servo_test
